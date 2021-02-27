@@ -1,12 +1,11 @@
+from django.shortcuts import get_object_or_404
+from rest_framework import status, viewsets
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
-from rest_framework import viewsets, status
 from rest_framework.response import Response
 
-from django.shortcuts import get_object_or_404
-
-from .models import Post, Comment, User
+from .models import Post, User
 from .permissions import IsAuthorOrReadOnly
-from .serializers import PostSerializer, CommentSerializer, UserSerializer
+from .serializers import CommentSerializer, PostSerializer, UserSerializer
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -18,10 +17,6 @@ class PostViewSet(viewsets.ModelViewSet):
     queryset = Post.objects.all()
     serializer_class = PostSerializer
     permission_classes = [IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly]
-    
-    def list(self, request):
-        serializer = self.serializer_class(self.queryset, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def perform_create(self, serializer, *args, **kwargs):
         serializer.save(author=self.request.user)
@@ -41,19 +36,18 @@ class PostViewSet(viewsets.ModelViewSet):
         return Response(status=status.HTTP_403_FORBIDDEN)
 
 
-
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
     permission_classes = [IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly]
+
     def perform_create(self, serializer):
-        post = get_object_or_404(Post, pk=self.kwargs.get('post_id'))
         data = {
             'author': self.request.user,
-            'post': self.kwargs.get('post_id', status.HTTP_404_NOT_FOUND),
+            'post_id': self.kwargs.get('post_id', status.HTTP_404_NOT_FOUND),
             'created': self.kwargs.get('created', '')
         }
         serializer.save(**data)
-    
+
     def get_queryset(self):
         post_id = self.kwargs.get('post_id', '')
         post = get_object_or_404(Post, pk=post_id)
