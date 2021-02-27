@@ -14,10 +14,11 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
 
 
-class PostViewSet(viewsets.ViewSet):
+class PostViewSet(viewsets.ModelViewSet):
     queryset = Post.objects.all()
     serializer_class = PostSerializer
     permission_classes = [IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly]
+    
     def list(self, request):
         serializer = self.serializer_class(self.queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -25,30 +26,12 @@ class PostViewSet(viewsets.ViewSet):
     def perform_create(self, serializer, *args, **kwargs):
         serializer.save(author=self.request.user)
 
-    def retrieve(self, request, pk=None):
-        post = Post.objects.get(self.queryset, id=pk)
-        serializer = self.serializer_class(post)
-        return Response(serializer.data,)
-
     def create(self, request):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             serializer.save(author=request.user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def update(self, request, pk=None):
-        post = Post.objects.get(id=pk)
-        if request.user == post.author:
-            serializer = self.serializer_class(
-                post,
-                data=request.data
-            )
-            if serializer.is_valid():
-                serializer.save(author=request.user)
-                return Response(serializer.data, status=status.HTTP_200_OK)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        return Response(status=status.HTTP_403_FORBIDDEN)
 
     def destroy(self, request, pk=None):
         post = Post.objects.get(id=pk)
@@ -66,7 +49,7 @@ class CommentViewSet(viewsets.ModelViewSet):
         post = get_object_or_404(Post, pk=self.kwargs.get('post_id'))
         data = {
             'author': self.request.user,
-            'post': self.kwargs.get(post, status.HTTP_404_NOT_FOUND),
+            'post': self.kwargs.get('post_id', status.HTTP_404_NOT_FOUND),
             'created': self.kwargs.get('created', '')
         }
         serializer.save(**data)
