@@ -7,7 +7,7 @@ from .views import CommentViewSet, PostViewSet, UserViewSet
 
 v1_router = DefaultRouter()
 
-v1_router.register('api/v1/users', UserViewSet, basename='users')
+v1_router.register('users', UserViewSet, basename='users')
 v1_router.register('posts', PostViewSet, basename='posts')
 v1_router.register(
     r'posts/(?P<post_id>\d+)/comments',
@@ -16,7 +16,5 @@ v1_router.register(
 )
 urlpatterns = [
     path('v1/', include(v1_router.urls)),
-]
-urlpatterns += [
-    path('v1/api-token-auth/', views.obtain_auth_token)
+    path('v1/api-token-auth/', views.obtain_auth_token),
 ]
