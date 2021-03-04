@@ -1,4 +1,4 @@
-from django.shortcuts import get_object_or_404 as _get_object_or_404
+from rest_framework.generics import get_object_or_404
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 
@@ -28,13 +28,13 @@ class CommentViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         data = {
             'author': self.request.user,
-            'post_id': self.kwargs.get('post_id', ''),
+            'post': get_object_or_404(Post, pk=self.kwargs.get('post_id')),
             'created': self.kwargs.get('created', '')
         }
         serializer.save(**data)
 
     def get_queryset(self):
         post_id = self.kwargs.get('post_id', '')
-        post = _get_object_or_404(Post, pk=post_id)
+        post = get_object_or_404(Post, pk=post_id)
         all_comments_of_post = post.comments.all()
         return all_comments_of_post
